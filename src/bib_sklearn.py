@@ -38,7 +38,7 @@ print('Accuracy for linear regression :', LR_accuracy)
 
 # K nearest neighbors
 
-data = pd.read_csv('data.txt')
+data = pd.read_csv('../data/data.txt')
 
 data.replace('?', -99999, inplace=True)
 data.drop(['id'], 1, inplace=True)
