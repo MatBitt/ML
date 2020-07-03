@@ -53,6 +53,13 @@ KN_classifier.fit(KN_X_train, KN_y_train)
 
 KN_accuracy = KN_classifier.score(KN_X_test, KN_y_test)
 
+# Dados nos quais quer se prever o resultado
+KN_tests = np.array([[4,2,2,1,2,1,1,3,2],[4,1,2,3,2,1,1,3,2]])
+KN_tests = KN_tests.reshape(len(KN_tests), -1)
+
+
+prediction = KN_classifier.predict(KN_tests)
+
 print('Accuracy for K nearest neighbors :', KN_accuracy)
 
 
