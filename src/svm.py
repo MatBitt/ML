@@ -14,30 +14,39 @@ class Support_Vector_Machine:
 
     def train(self, data):
         self.data = data
+
         # { |w| : [w,b] }
         opt_dict = {}
+
+        # Test all 4 symetrical points
         transforms = [[1,1],[1,-1],[-1,1],[-1,-1]]
 
         all_data = []
 
+        # Gets all points
         for yi in self.data:
             for featureset in self.data[yi]:
                 for features in featureset:
                     all_data.append(features)
         
+        # Seeks for the highest and lowest feature in all points
         self.max_feature_value = max(all_data)
         self.min_feature_value = min(all_data)
+        
+        #Releases data
         all_data = None
 
+        # Starts with large steps, then gets more precise
         step_sizes = [self.max_feature_value * 0.1,
                       self.max_feature_value * 0.01,
                       self.max_feature_value * 0.001
                       ]
 
-        #Extremly expensive
+        # Extremly expensive
         b_range_multiple = 5
 
-        #Multiplica o step para achar o b, pq não é necessario steps tao baixos para acha-lo
+        # b step multiplier
+        # b doesn't need as much precision as w
         b_multiple = 5
 
         latest_optimum = self.max_feature_value*10
@@ -74,7 +83,8 @@ class Support_Vector_Machine:
                     # step = 1
                     # w - step = [4,4]
                     w = w - step
-            #Ordenou o dicionario do menor pro maior |w|
+
+            #Sorted the dictionary from lowest to highest |w|
             norms = sorted([n for n in opt_dict])
             
             #|w| : [w,b]
