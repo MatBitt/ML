@@ -11,7 +11,7 @@ class Support_Vector_Machine:
         if self.visualization :
             self.fig = plt.figure()
             self.ax = self.fig.add_subplot(1,1,1)
-
+ 
     def train(self, data):
         self.data = data
 

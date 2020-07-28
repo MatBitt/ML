@@ -11,11 +11,11 @@ class regressao_linear:
         self.b = mean(saidas) - self.a*mean(entradas)
         self.xs = entradas
         self.ys = saidas
-
+ 
     def previsao(self, entrada):
         saida = (self.a*entrada) + self.b
         plt.scatter(entrada, saida, color='r')
-        return (self.a*entrada) + self.b
+        return saida
 
     def grafico(self):
         self.previsao = np.array([(self.a*x) + self.b for x in self.xs])
