@@ -153,7 +153,7 @@ rede.train(data, y_reais)
 # rede.pesos()
 
 
-# Coisas que seria bom adicionar
+# Coisas a adicionar
 
 # Achar um jeito bom de estimar os pesos iniciais
 # Dividir o learning rate em 3 etapas, começando com passos grandes, e dps diminuindo
