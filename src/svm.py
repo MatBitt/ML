@@ -113,11 +113,11 @@ class Support_Vector_Machine:
         [[self.ax.scatter(x[0], x[1], s=100, color=self.colors[i]) for x in data_dict[i]] for i in data_dict]
 
         # xw + b = v
-        # x,y is an unknown point on the hyperplane
+        # (x,y) is an unknown point on the hyperplane
         # x_v and w_v are the vector
         # x_v = [x,y]
         # x_v.w_v+b = 1 for postive sv
-        # x.w[0] + y.w[1] + b =1 
+        # x.w[0] + y.w[1] + b = 1 
         # y = -x.w[0] - b + 1 / w[1]
         def hyperplane(x, w, b, v):
             return (-w[0]*x-b+v)/w[1]

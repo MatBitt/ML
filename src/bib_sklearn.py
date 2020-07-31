@@ -36,6 +36,9 @@ LR_accuracy = LR_classifier.score(LR_X_test, LR_y_test)
 
 print('Accuracy for linear regression :', LR_accuracy)
 
+
+
+
 # K nearest neighbors
 
 data = pd.read_csv('../data/data.txt')
