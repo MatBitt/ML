@@ -126,7 +126,7 @@ class RedeNeural:
                 pass    
             
 
-# Cada dado possui 2 features, [x,y]
+# Cada dado possui 2 features, [x1,x2]
 # Baseado em suas features, obtemos a saída 0 ou 1
 
 data = np.array([
