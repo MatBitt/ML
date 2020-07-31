@@ -15,53 +15,64 @@ class Neuronio:
         self.w = w
         self.b = b
 
-    def feedfoward(self, x):
+    def feedfoward(self, x, sig=True):
         # y = wx + b
         res = np.dot(self.w, x) + self.b
-        return sigmoid(res)
+        if(sig):
+            return sigmoid(res)
+        return res
 
 class RedeNeural:
-    def __init__(self):
+    def __init__(self, features):
+        self.features = features
 
-        # w = []
-        # for i in range(k):
-        #     w.append(np.random.normal())
-        # self.w = np.array(w)
+        wi = []
+        bi = []
+        wo = []
+
+        for i in range(features**2):
+            wi.append(np.random.normal())
         
-        self.w1 = np.random.normal()
-        self.w2 = np.random.normal()
-        self.w3 = np.random.normal()
-        self.w4 = np.random.normal()
-        self.w5 = np.random.normal()
-        self.w6 = np.random.normal()
-    
-        self.b1 = np.random.normal()
-        self.b2 = np.random.normal()
-        self.b3 = np.random.normal()
+        for i in range(features):
+            wo.append(np.random.normal())
+            bi.append(np.random.normal())
+            
+        self.wi = np.array(wi)
+        self.wo = np.array(wo)
+        self.bi = np.array(bi)            
+        self.bo = np.random.normal()
 
     def feedfoward(self, x):
-        #Camada 1
-        n1 = Neuronio(np.array([self.w1, self.w2]), self.b1)
-        saida_n1 = n1.feedfoward(x)
-        n2 = Neuronio(np.array([self.w3, self.w4]), self.b2)
-        saida_n2 = n2.feedfoward(x)
+        #Input layer
+        saida = []
 
-        #Camada 2
-        n3 = Neuronio(np.array([self.w5, self.w6]), self.b3)
-        saida_n3 = n3.feedfoward(np.array([saida_n1, saida_n2]))
+        for j in range(self.features):
+            featureset = []
+            for i in range(self.features):
+                featureset.append(self.w[j*self.features + i])
+            n = Neuronio(np.array(featureset), self.bi[i])
+            saida.append(n.feedfoward(x))
 
-        return saida_n3
+
+        #Output layer
+        n_out = Neuronio(self.wo, self.bo)
+        res = n_out.feedfoward(np.array(saida))
+
+        return res
     
     def pesos(self):
-        print('w1 : %.3f' %(self.w1))
-        print('w2 : %.3f' %(self.w2))
-        print('w3 : %.3f' %(self.w3))
-        print('w4 : %.3f' %(self.w4))
-        print('w5 : %.3f' %(self.w5))
-        print('w6 : %.3f' %(self.w6))
-        print('b1 : %.3f' %(self.b1))
-        print('b2 : %.3f' %(self.b2))
-        print('b3 : %.3f' %(self.b3))
+
+        for i in range(self.features**2):
+            print(f"wi{i} : {self.wi[i]}")
+
+        for i in range(self.features):
+            print(f"wo{i} : {self.wo[i]}")
+        
+        for i in range(self.features):
+            print(f"bi{i} : {self.bi[i]}")
+        
+        print(f"bo0 : {self.bo}")
+
         print(' ')
     
     def train(self, data, y_reais):
@@ -82,6 +93,21 @@ class RedeNeural:
                 res_n3 = self.w5 * n1 + self.w6 * n2 + self.b3
                 n3 = sigmoid(res_n3)
                 y_pred = n3
+
+                saida = []
+                res_n = []
+
+                for j in range(self.features):
+                    featureset = []
+                    for i in range(self.features):
+                        featureset.append(self.w[j*self.features + i])
+                    n = Neuronio(np.array(featureset), self.bi[i])
+                    res_n.append(n.feedfoward(x), sig=False)
+                    saida.append(n.feedfoward(x))
+
+                last_n = Neuronio(self.wo, self.bo)
+                n_out = n_out.feedfoward(np.array(saida), sig=False)
+                y_pred = sigmoid(n_out)
 
                 # Calculo das derivadas parciais
                 # L denota Loss, que é a função do erro
@@ -149,12 +175,12 @@ y_reais = np.array([
   1, # Dado 4
 ])
 
-rede = RedeNeural()
-# print('Pesos iniciais:')
-# rede.pesos()
+rede = RedeNeural(2)
+print('Pesos iniciais:')
+rede.pesos()
 
 
-rede.train(data, y_reais)
+# rede.train(data, y_reais)
 # print('Pesos finais:')
 # rede.pesos()
 
