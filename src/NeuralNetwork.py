@@ -15,53 +15,64 @@ class Neuronio:
         self.w = w
         self.b = b
 
-    def feedfoward(self, x):
+    def feedfoward(self, x, sig=True):
         # y = wx + b
         res = np.dot(self.w, x) + self.b
-        return sigmoid(res)
+        if(sig):
+            return sigmoid(res)
+        return res
 
 class RedeNeural:
-    def __init__(self):
+    def __init__(self, features):
+        self.features = features
 
-        # w = []
-        # for i in range(k):
-        #     w.append(np.random.normal())
-        # self.w = np.array(w)
+        wi = []
+        bi = []
+        wo = []
+
+        for i in range(features**2):
+            wi.append(np.random.normal())
         
-        self.w1 = np.random.normal()
-        self.w2 = np.random.normal()
-        self.w3 = np.random.normal()
-        self.w4 = np.random.normal()
-        self.w5 = np.random.normal()
-        self.w6 = np.random.normal()
-    
-        self.b1 = np.random.normal()
-        self.b2 = np.random.normal()
-        self.b3 = np.random.normal()
+        for i in range(features):
+            wo.append(np.random.normal())
+            bi.append(np.random.normal())
+            
+        self.wi = np.array(wi)
+        self.wo = np.array(wo)
+        self.bi = np.array(bi)            
+        self.bo = np.random.normal()
 
     def feedfoward(self, x):
-        #Camada 1
-        n1 = Neuronio(np.array([self.w1, self.w2]), self.b1)
-        saida_n1 = n1.feedfoward(x)
-        n2 = Neuronio(np.array([self.w3, self.w4]), self.b2)
-        saida_n2 = n2.feedfoward(x)
+        #Input layer
+        saida = []
 
-        #Camada 2
-        n3 = Neuronio(np.array([self.w5, self.w6]), self.b3)
-        saida_n3 = n3.feedfoward(np.array([saida_n1, saida_n2]))
+        for j in range(self.features):
+            featureset = []
+            for i in range(self.features):
+                featureset.append(self.wi[j*self.features + i])
+            n = Neuronio(np.array(featureset), self.bi[i])
+            saida.append(n.feedfoward(x))
 
-        return saida_n3
+
+        #Output layer
+        n_out = Neuronio(self.wo, self.bo)
+        res = n_out.feedfoward(np.array(saida))
+
+        return res
     
     def pesos(self):
-        print('w1 : %.3f' %(self.w1))
-        print('w2 : %.3f' %(self.w2))
-        print('w3 : %.3f' %(self.w3))
-        print('w4 : %.3f' %(self.w4))
-        print('w5 : %.3f' %(self.w5))
-        print('w6 : %.3f' %(self.w6))
-        print('b1 : %.3f' %(self.b1))
-        print('b2 : %.3f' %(self.b2))
-        print('b3 : %.3f' %(self.b3))
+
+        for i in range(self.features**2):
+            print(f"wi{i} : {self.wi[i]:.3f}")
+
+        for i in range(self.features):
+            print(f"wo{i} : {self.wo[i]:.3f}")
+        
+        for i in range(self.features):
+            print(f"bi{i} : {self.bi[i]:.3f}")
+        
+        print(f"bo0 : {self.bo:.3f}")
+
         print(' ')
     
     def train(self, data, y_reais):
@@ -72,74 +83,79 @@ class RedeNeural:
         for iteracao in range(iteracoes):
             for x, y_real in zip(data, y_reais):
 
-                # Feedfoward
-                res_n1 = self.w1 * x[0] + self.w2 * x[1] + self.b1
-                n1 = sigmoid(res_n1)
+                n = []
+                res_n = []
 
-                res_n2 = self.w3 * x[0] + self.w4 * x[1] + self.b2
-                n2 = sigmoid(res_n2)
+                for j in range(self.features):
+                    featureset = []
+                    for i in range(self.features):
+                        featureset.append(self.wi[j*self.features + i])
+                    node = Neuronio(np.array(featureset), self.bi[i])
+                    res_n.append(node.feedfoward(x, sig=False))
+                    n.append(node.feedfoward(x))
 
-                res_n3 = self.w5 * n1 + self.w6 * n2 + self.b3
-                n3 = sigmoid(res_n3)
-                y_pred = n3
+                last_n = Neuronio(self.wo, self.bo)
+                n_out = last_n.feedfoward(np.array(n), sig=False)
+                y_pred = sigmoid(n_out)
 
                 # Calculo das derivadas parciais
-                # L denota Loss, que é a função do erro
+                # L denota loss, que é a função do erro
                 # dL_dw1 significa "derivada parcial de L / derivada parcial de w1"
 
                 dL_dypred = -2 * (y_real - y_pred)
 
-                # Neuronio n3
-                dypred_dw5 = n1 * derivada_sigmoid(res_n3)
-                dypred_dw6 = n2 * derivada_sigmoid(res_n3)
-                dypred_db3 = derivada_sigmoid(res_n3)
+                # Output node
 
-                dypred_dn1 = self.w5 * derivada_sigmoid(res_n3)
-                dypred_dn2 = self.w6 * derivada_sigmoid(res_n3)
+                dypred_dw = []
+                dypred_dn = []
+                for i in range(self.features):
+                    dypred_dw.append(n[i] * derivada_sigmoid(n_out))
+                    dypred_dn.append(self.wo[i] * derivada_sigmoid(n_out))
+                
+                dypred_dbo = derivada_sigmoid(n_out)
 
-                # Neuronio n1
-                dn1_dw1 = x[0] * derivada_sigmoid(res_n1)
-                dn1_dw2 = x[1] * derivada_sigmoid(res_n1)
-                dn1_db1 = derivada_sigmoid(res_n1)
+                # Input nodes
+                dn_dw = []
+                aux = []
 
-                # Neuronio n2
-                dn2_dw3 = x[0] * derivada_sigmoid(res_n2)
-                dn2_dw4 = x[1] * derivada_sigmoid(res_n2)
-                dn2_db2 = derivada_sigmoid(res_n2)
+                for j in range(self.features):
+                    for i in range(self.features):
+                        aux.append(x[i] * derivada_sigmoid(res_n[j]))
+                    dn_dw.append(aux)
+
+                dn_db = []
+                for i in range(self.features):
+                    dn_db.append(derivada_sigmoid(res_n[i]))
 
                 # Atualizando
-                # var = var - (alfa * (dL/dvar))
+                # x = x - (alfa * (dL/dx))
+
+                # Input nodes
+                for j in range(self.features):
+                    for i in range(self.features):
+                        self.wi[j*self.features + i] -= learn_rate * dL_dypred * dypred_dn[j] * dn_dw[j][i]
                 
-                # Neuronio n1
-                self.w1 -= learn_rate * dL_dypred * dypred_dn1 * dn1_dw1
-                self.w2 -= learn_rate * dL_dypred * dypred_dn1 * dn1_dw2
-                self.b1 -= learn_rate * dL_dypred * dypred_dn1 * dn1_db1
+                for i in range(self.features):
+                    self.bi[i] -= learn_rate * dL_dypred * dypred_dn[i] * dn_db[i]
 
-                # Neuronio n2
-                self.w3 -= learn_rate * dL_dypred * dypred_dn2 * dn2_dw3
-                self.w4 -= learn_rate * dL_dypred * dypred_dn2 * dn2_dw4
-                self.b2 -= learn_rate * dL_dypred * dypred_dn2 * dn2_db2
-
-                # Neuronio n3
-                self.w5 -= learn_rate * dL_dypred * dypred_dw5
-                self.w6 -= learn_rate * dL_dypred * dypred_dw6
-                self.b3 -= learn_rate * dL_dypred * dypred_db3
+                # Output node
+                for i in range(self.features):
+                    self.wo[i] -= learn_rate * dL_dypred * dypred_dw[i]
+                
+                self.bo -= learn_rate * dL_dypred * dypred_dbo
 
             if (iteracao % 10) == 0:
                 y_preds = np.apply_along_axis(self.feedfoward, 1, data)
                 erro = erro_quadratico(y_reais, y_preds)
                 print("iteracao %d erro: %.3f" %(iteracao, erro))
                 pass    
-            
 
-# Cada dado possui 2 features, [x1,x2]
-# Baseado em suas features, obtemos a saída 0 ou 1
 
 data = np.array([
-  [-2, -1],  # Dado 1
-  [25, 6],   # Dado 3
-  [17, 4],   # Dado 3
-  [-15, -6], # Dado 4
+  [-2, -1, 5],  # Dado 1
+  [25, 6, 1],   # Dado 3
+  [17, 4, 2],   # Dado 3
+  [-15, -6, 7], # Dado 4
 ])
 
 y_reais = np.array([
@@ -149,19 +165,21 @@ y_reais = np.array([
   1, # Dado 4
 ])
 
-rede = RedeNeural()
+teste = np.array([20, 2, -1])
+
+rede = RedeNeural(3)
 # print('Pesos iniciais:')
 # rede.pesos()
-
 
 rede.train(data, y_reais)
 # print('Pesos finais:')
 # rede.pesos()
+
+# print(rede.feedfoward(teste))
 
 
 # Coisas a adicionar
 
 # Achar um jeito bom de estimar os pesos iniciais
 # Dividir o learning rate em 3 etapas, começando com passos grandes, e dps diminuindo
-# Tornar o algoritmo mais geral, sem levar em conta o numero de features
 # Criar um pdf explicando a teoria por tras
