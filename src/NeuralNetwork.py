@@ -1,159 +1,98 @@
 import numpy as np
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x)) #Normarlizar a saída para ser entre 0 e 1
-
-def derivada_sigmoid(x):
-    sig = sigmoid(x)
-    return sig * (1-sig)
-
-def erro_quadratico(y_real, y_pred):
-    return ((y_real - y_pred)**2).mean()
-
-class Neuronio:
-    def __init__(self, w, b):
-        self.w = w
-        self.b = b
-
-    def feedfoward(self, x, sig=True):
-        # y = wx + b
-        res = np.dot(self.w, x) + self.b
-        if(sig):
-            return sigmoid(res)
-        return res
+def sigmoid(Z):
+    return 1 / (1 + np.exp(-Z))
 
 class RedeNeural:
-    def __init__(self, features):
-        self.features = features
 
-        wi = []
-        bi = []
-        wo = []
+    def __init__(self, X, Y):
+        X = X.T
+        self.n_x = X.shape[0]
+        self.n_h = 4
+        self.n_o = Y.shape[0]
 
-        for i in range(features**2):
-            wi.append(np.random.normal())
-        
-        for i in range(features):
-            wo.append(np.random.normal())
-            bi.append(np.random.normal())
-            
-        self.wi = np.array(wi)
-        self.wo = np.array(wo)
-        self.bi = np.array(bi)            
-        self.bo = np.random.normal()
-
-    def feedfoward(self, x):
-        #Input layer
-        saida = []
-
-        for j in range(self.features):
-            featureset = []
-            for i in range(self.features):
-                featureset.append(self.wi[j*self.features + i])
-            n = Neuronio(np.array(featureset), self.bi[i])
-            saida.append(n.feedfoward(x))
-
-
-        #Output layer
-        n_out = Neuronio(self.wo, self.bo)
-        res = n_out.feedfoward(np.array(saida))
-
-        return res
+    def initializeParameters(self):
+        self.W1 = np.random.randn(self.n_h, self.n_x)
+        self.b1 = np.zeros((self.n_h, 1))
+        self.W2 = np.random.randn(1, self.n_h)
+        self.b2 = np.zeros((self.n_o, 1))
     
-    def pesos(self):
+    def fowardPropagation(self, X):
+        Z1 = np.dot(self.W1, X) + self.b1
+        A1 = np.tanh(Z1)
+        Z2 = np.dot(self.W2, A1) + self.b2
+        A2 = sigmoid(Z2)
 
-        for i in range(self.features**2):
-            print(f"wi{i} : {self.wi[i]:.3f}")
+        output = {"Z1":Z1,
+                  "A1":A1,
+                  "Z2":Z2,
+                  "A2":A2}
 
-        for i in range(self.features):
-            print(f"wo{i} : {self.wo[i]:.3f}")
-        
-        for i in range(self.features):
-            print(f"bi{i} : {self.bi[i]:.3f}")
-        
-        print(f"bo0 : {self.bo:.3f}")
+        return output
 
-        print(' ')
+    def backPropagation(self, X, Y, output):
+        Z1 = output["Z1"]
+        A1 = output["A1"]
+        Z2 = output["Z2"]
+        A2 = output["A2"]
+        m = X.shape[1]
+
+        dZ2 = (A2 - Y)
+        dW2 = np.dot(dZ2, A1.T)/m
+        db2 = np.sum(dZ2, axis = 1, keepdims = True)/m
+        dZ1 = self.W2.T*dZ2*(1 - np.power(A1, 2))
+        dW1 = np.dot(dZ1,X.T)/m
+        db1 = np.sum(dZ1, axis = 1, keepdims = True)/m
+
+        derivs = {"dW2":dW2,
+                  "db2":db2,
+                  "dW1":dW1,
+                  "db1":db1
+        }
     
-    def train(self, data, y_reais):
+        return derivs
 
-        learn_rate = 0.1
-        iteracoes = 1000
+    def updateParameters(self, derivs, learning_rate=0.1):
+        dW1 = derivs["dW1"]
+        db1 = derivs["db1"]
+        dW2 = derivs["dW2"]
+        db2 = derivs["db2"]
 
-        for iteracao in range(iteracoes):
-            for x, y_real in zip(data, y_reais):
+        self.W1 = self.W1 - learning_rate*dW1
+        self.b1 = self.b1 - learning_rate*db1
+        self.W2 = self.W2 - learning_rate*dW2
+        self.b2 = self.b2 - learning_rate*db2
 
-                n = []
-                res_n = []
+    def error(self, output, Y):
+        A2 = output["A2"]
+        m = Y.shape[0]
 
-                for j in range(self.features):
-                    featureset = []
-                    for i in range(self.features):
-                        featureset.append(self.wi[j*self.features + i])
-                    node = Neuronio(np.array(featureset), self.bi[i])
-                    res_n.append(node.feedfoward(x, sig=False))
-                    n.append(node.feedfoward(x))
+        log = -(np.multiply(np.log(A2), Y) + np.multiply(np.log(1-A2), 1-Y))/m
+        cost = np.sum(log)
+        
+        return cost
+    
+    def predict(self, X):
+        output = fowardPropagation(X)
+        prediction = output["A2"]
 
-                last_n = Neuronio(self.wo, self.bo)
-                n_out = last_n.feedfoward(np.array(n), sig=False)
-                y_pred = sigmoid(n_out)
+        return prediction
 
-                # Calculo das derivadas parciais
-                # L denota loss, que é a função do erro
-                # dL_dw1 significa "derivada parcial de L / derivada parcial de w1"
+    def model(self, X, Y, printError=False):
+        X = X.T
+        self.initializeParameters()
+        iterations = 1000
 
-                dL_dypred = -2 * (y_real - y_pred)
-
-                # Output node
-
-                dypred_dw = []
-                dypred_dn = []
-                for i in range(self.features):
-                    dypred_dw.append(n[i] * derivada_sigmoid(n_out))
-                    dypred_dn.append(self.wo[i] * derivada_sigmoid(n_out))
-                
-                dypred_dbo = derivada_sigmoid(n_out)
-
-                # Input nodes
-                dn_dw = []
-                aux = []
-
-                for j in range(self.features):
-                    for i in range(self.features):
-                        aux.append(x[i] * derivada_sigmoid(res_n[j]))
-                    dn_dw.append(aux)
-
-                dn_db = []
-                for i in range(self.features):
-                    dn_db.append(derivada_sigmoid(res_n[i]))
-
-                # Atualizando
-                # x = x - (alfa * (dL/dx))
-
-                # Input nodes
-                for j in range(self.features):
-                    for i in range(self.features):
-                        self.wi[j*self.features + i] -= learn_rate * dL_dypred * dypred_dn[j] * dn_dw[j][i]
-                
-                for i in range(self.features):
-                    self.bi[i] -= learn_rate * dL_dypred * dypred_dn[i] * dn_db[i]
-
-                # Output node
-                for i in range(self.features):
-                    self.wo[i] -= learn_rate * dL_dypred * dypred_dw[i]
-                
-                self.bo -= learn_rate * dL_dypred * dypred_dbo
-
-            if (iteracao % 10) == 0:
-                y_preds = np.apply_along_axis(self.feedfoward, 1, data)
-                erro = erro_quadratico(y_reais, y_preds)
-                print("iteracao %d erro: %.3f" %(iteracao, erro))
-                pass    
-
+        for i in range(iterations):
+            output = self.fowardPropagation(X)
+            derivs = self.backPropagation(X, Y, output)
+            self.updateParameters(derivs)
+            if printError and i%10 == 0:
+                print(f"iteration {i} error :","%.3f" %self.error(output, Y))
 
 data = np.array([
   [-2, -1, 5],  # Dado 1
-  [25, 6, 1],   # Dado 3
+  [25, 6, 1],   # Dado 2
   [17, 4, 2],   # Dado 3
   [-15, -6, 7], # Dado 4
 ])
@@ -165,21 +104,5 @@ y_reais = np.array([
   1, # Dado 4
 ])
 
-teste = np.array([20, 2, -1])
-
-rede = RedeNeural(3)
-# print('Pesos iniciais:')
-# rede.pesos()
-
-rede.train(data, y_reais)
-# print('Pesos finais:')
-# rede.pesos()
-
-# print(rede.feedfoward(teste))
-
-
-# Coisas a adicionar
-
-# Achar um jeito bom de estimar os pesos iniciais
-# Dividir o learning rate em 3 etapas, começando com passos grandes, e dps diminuindo
-# Criar um pdf explicando a teoria por tras
+teste = RedeNeural(data, y_reais)
+teste.model(data, y_reais, printError=True)
