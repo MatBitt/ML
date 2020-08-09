@@ -5,19 +5,16 @@ def sigmoid(Z):
 
 class RedeNeural:
 
-    def __init__(self, X, Y):
-        X = X.T
+    def initializeParameters(self, X, Y):
         self.n_x = X.shape[0]
         self.n_h = 4
         self.n_o = Y.shape[0]
-
-    def initializeParameters(self):
         self.W1 = np.random.randn(self.n_h, self.n_x)
         self.b1 = np.zeros((self.n_h, 1))
         self.W2 = np.random.randn(1, self.n_h)
         self.b2 = np.zeros((self.n_o, 1))
     
-    def fowardPropagation(self, X):
+    def forwardPropagation(self, X):
         Z1 = np.dot(self.W1, X) + self.b1
         A1 = np.tanh(Z1)
         Z2 = np.dot(self.W2, A1) + self.b2
@@ -30,7 +27,7 @@ class RedeNeural:
 
         return output
 
-    def backPropagation(self, X, Y, output):
+    def backwardPropagation(self, X, Y, output):
         Z1 = output["Z1"]
         A1 = output["A1"]
         Z2 = output["Z2"]
@@ -73,19 +70,21 @@ class RedeNeural:
         return cost
     
     def predict(self, X):
-        output = fowardPropagation(X)
+        X = X.T
+        output = self.forwardPropagation(X)
         prediction = output["A2"]
 
-        return prediction
+        return ((prediction > 0.5)*1).T
 
     def model(self, X, Y, printError=False):
         X = X.T
-        self.initializeParameters()
+        Y = Y.T
+        self.initializeParameters(X, Y)
         iterations = 1000
 
         for i in range(iterations):
-            output = self.fowardPropagation(X)
-            derivs = self.backPropagation(X, Y, output)
+            output = self.forwardPropagation(X)
+            derivs = self.backwardPropagation(X, Y, output)
             self.updateParameters(derivs)
             if printError and i%10 == 0:
                 print(f"iteration {i} error :","%.3f" %self.error(output, Y))
@@ -98,11 +97,17 @@ data = np.array([
 ])
 
 y_reais = np.array([
-  1, # Dado 1
-  0, # Dado 2
-  0, # Dado 3
-  1, # Dado 4
+  [1], # Dado 1
+  [0], # Dado 2
+  [0], # Dado 3
+  [1], # Dado 4
 ])
 
-teste = RedeNeural(data, y_reais)
+new_data = np.array([
+    [10, 7, -1],
+    [-1, 2, 10],
+])
+
+teste = RedeNeural()
 teste.model(data, y_reais, printError=True)
+print(teste.predict(new_data))
