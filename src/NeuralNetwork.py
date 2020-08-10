@@ -9,9 +9,9 @@ class RedeNeural:
         self.n_x = X.shape[0]
         self.n_h = 4
         self.n_o = Y.shape[0]
-        self.W1 = np.random.randn(self.n_h, self.n_x)
+        self.W1 = np.random.randn(self.n_h, self.n_x)*0.01
         self.b1 = np.zeros((self.n_h, 1))
-        self.W2 = np.random.randn(1, self.n_h)
+        self.W2 = np.random.randn(1, self.n_h)*0.01
         self.b2 = np.zeros((self.n_o, 1))
     
     def forwardPropagation(self, X):
